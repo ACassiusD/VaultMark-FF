@@ -1,0 +1,29 @@
+{
+  "manifest_version": 2,
+  "name": "Private Bookmarks",
+  "version": "1.0",
+  "description": "Securely store and manage your bookmarks.",
+  "permissions": ["storage", "contextMenus", "tabs", "<all_urls>"],
+  "background": {
+    "scripts": ["background.js"]
+  },
+  "browser_action": {
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "icons/icon.png",
+      "48": "icons/icon.png",
+      "128": "icons/icon.png"
+    },
+    "default_title": "Private Bookmarks"
+  },
+  "icons": {
+    "16": "icons/icon.png",
+    "48": "icons/icon.png",
+    "128": "icons/icon.png"
+  },
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "vaultmarks@example.com"
+    }
+  }
+}

@@ -1,0 +1,559 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Private Bookmarks</title>
+  <style>
+    /* Global Styles */
+    body {
+      font-family: 'Roboto', sans-serif;
+      padding: 10px;
+      margin: 0;
+      background-color: #f8f9fa;
+      color: #333;
+      width: 600px;
+      height: 580px;
+      border-radius: 10px;
+      box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    h1 {
+      text-align: center;
+      font-size: 1.2em; /* Reduced font size */
+      margin-bottom: 0.5em; /* Reduced margin */
+      color: #007bff;
+    }
+
+    /* Buttons */
+    button {
+      cursor: pointer;
+      border: none;
+      padding: 8px 12px; /* Reduced padding */
+      border-radius: 6px;
+      font-weight: bold;
+      transition: background 0.2s, transform 0.1s;
+    }
+
+    button:hover {
+      transform: translateY(-1px);
+    }
+
+    /* Icon Bar */
+    .icon-bar {
+      display: flex;
+      justify-content: center; /* Center icons */
+      gap: 5px;
+      width: 100%; /* Ensure the icon bar takes full width */
+    }
+
+    .icon-bar button {
+      background: none;
+      border: none;
+      cursor: pointer;
+      position: relative;
+    }
+
+    .icon-bar button img {
+      width: 24px;
+      height: 24px;
+    }
+
+    .icon-bar button .tooltip {
+      display: none;
+      position: absolute;
+      bottom: 30px;
+      left: 50%;
+      transform: translateX(-50%);
+      background-color: #333;
+      color: white;
+      padding: 5px 10px;
+      border-radius: 4px;
+      font-size: 0.8em;
+      white-space: nowrap;
+      z-index: 10;
+    }
+
+    .icon-bar button:hover .tooltip {
+      display: block;
+    }
+
+    /* Form Inputs */
+    input {
+      padding: 8px;
+      margin: 5px 0;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      width: 100%;
+    }
+
+    form {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      width: 100%;
+    }
+
+    /* Bookmark List */
+    ul {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      width: 100%;
+      max-height: 442px;
+      overflow-y: auto;
+    }
+
+    li {
+      display: flex;
+      align-items: center;
+      padding: 10px;
+      margin-bottom: 6px;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      background-color: white;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    li:hover {
+      transform: translateY(-2px);
+      box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    /* Folder List Item */
+    .folders-container {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      width: 100%;
+      padding-top: 5px;
+      padding-bottom: 5px;
+      box-sizing: border-box;
+      overflow: visible;
+      padding-left: 6px; /* Add left padding to prevent edge clipping */
+    }
+
+    li.folder,
+    li.back-btn,
+    li.folder-placeholder {
+      height: 40px;
+      min-height: 40px;
+      width: 98%; /* Prevent flush edge, allow for expansion */
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-sizing: border-box;
+      padding: 0 12px;
+    }
+
+    li.folder-placeholder {
+      border: none !important;
+      background: transparent !important;
+      margin: 0 !important;
+      visibility: hidden;
+    }
+
+    li.folder {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 5px;
+      border-radius: 8px;
+      background-color: #e6f7ff;
+      border: 1px solid #b3e0ff;
+      font-weight: bold;
+      transition: background 0.2s, transform 0.1s;
+      cursor: pointer;
+      box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.1); /* Added shadow */
+      text-align: center;
+    }
+
+    li.folder:hover {
+      background-color: #d0eaff;
+      transform: translateY(-1px);
+      box-shadow: 0px 3px 6px rgba(0, 123, 255, 0.15);
+    }
+
+    .folder-name {
+      font-size: 1em;
+      color: #007bff;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      width: 90%;
+    }
+
+    .folder-actions {
+      display: flex;
+      gap: 10px; /* Increased space between buttons */
+    }
+
+    .delete-folder-btn {
+      padding: 6px 12px; /* Adjusted padding */
+      border: none;
+      border-radius: 5px;
+      background-color: #dc3545;
+      color: white;
+      font-size: 0.75em; /* Adjusted font size */
+      font-weight: bold;
+      cursor: pointer;
+      transition: background 0.2s, transform 0.1s;
+    }
+
+    .delete-folder-btn:hover {
+      background-color: #a71d2a;
+      transform: scale(1.05);
+    }
+
+    li.bookmark {
+      width: 94.0%;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    li.bookmark img {
+      width: 20px;
+      height: 20px;
+      margin-right: 10px;
+      border-radius: 50%;
+    }
+
+    li.bookmark a {
+      flex-grow: 1;
+      text-decoration: none;
+      color: #007bff;
+      font-size: 0.9em;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+      overflow: hidden;
+    }
+
+    li.bookmark a:hover {
+      text-decoration: underline;
+    }
+
+    li.bookmark button {
+      background-color: #dc3545;
+      color: white;
+      padding: 6px 10px;
+      font-size: 0.8em;
+      border-radius: 4px;
+    }
+
+    li.bookmark button:hover {
+      background-color: #a71d2a;
+    }
+
+    /* Sections */
+    .hidden {
+      display: none;
+    }
+
+    .logout {
+      margin-top: 10px;
+      text-align: center;
+    }
+
+    #add-bookmark{
+      margin-bottom: 10px; /* Reduced margin */
+    }
+
+    #bookmark-form { display: none; }
+    /* Top Buttons Layout */
+    .top-controls {
+      display: flex;
+      justify-content: space-between;
+      width: 100%;
+      padding-bottom: 5px; /* Reduced padding */
+    }
+    /* Ensure the bookmark list always takes full width */
+    #bookmarks-section, #bookmarks-list {
+      width: 100%;
+    }
+
+    .clear-search {
+      color: #007bff; /* Nice blue color */
+      font-weight: bold;
+      cursor: pointer;
+      margin-left: 10px;
+      text-decoration: underline;
+    }
+
+    .clear-search:hover {
+      color: #0056b3; /* Darker blue for hover effect */
+    }
+
+    .search-toggle-container {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+
+    /* Styling the toggle switch */
+    .switch {
+      position: relative;
+      display: inline-block;
+      width: 34px;
+      height: 20px;
+    }
+
+    .switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+
+    .slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: #ccc;
+      transition: 0.3s;
+      border-radius: 34px;
+    }
+
+    .slider:before {
+      position: absolute;
+      content: "";
+      height: 14px;
+      width: 14px;
+      left: 3px;
+      bottom: 3px;
+      background-color: white;
+      transition: 0.3s;
+      border-radius: 50%;
+    }
+
+    input:checked + .slider {
+      background-color: #007bff;
+    }
+
+    input:checked + .slider:before {
+      transform: translateX(14px);
+    }
+
+    .search-toggle-label {
+        font-size: 14px;
+        color: #333;
+        cursor: pointer;
+        user-select: none;
+    }
+    .search-container {
+      display: flex;
+      align-items: center;
+      background: white;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      width: 100%;
+      max-width: 500px;
+      box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.1);
+      margin: 0.5em auto; /* Center the container */
+    }
+
+    #bookmark-search {
+      flex: 1;
+      border: none;
+      outline: none;
+      padding: 8px 10px;
+      font-size: 14px;
+      border-radius: 6px;
+      background: transparent;
+    }
+
+    .clear-search-btn {
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 8px;
+      color: #666;
+      font-size: 16px;
+      border-radius: 50%;
+      transition: background-color 0.2s;
+      display: none; /* Hidden by default */
+    }
+
+    .clear-search-btn:hover {
+      background-color: #f0f0f0;
+      color: #333;
+    }
+
+    .clear-search-btn.visible {
+      display: block;
+    }
+
+    .toggle-wrapper {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      padding: 5px 10px;
+      border-left: 1px solid #ddd; /* Visual separation */
+    }
+
+    /* Filtered Bookmark Styles */
+    .bookmark-content-container {
+      flex: 1;
+      min-width: 0;
+      overflow: hidden;
+    }
+
+    .bookmark-link {
+      display: block;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      flex-grow: 1;
+    }
+
+    .folder-info {
+      color: #666;
+      font-size: 1em;
+      font-style: italic;
+      margin-right: 8px;
+      flex-shrink: 0;
+    }
+
+    .folder-name-link {
+      color: #6f42c1;         /* Bootstrap purple */
+      text-decoration: underline;
+      cursor: pointer;
+      transition: color 0.2s;
+    }
+
+    .folder-name-link:hover {
+      color: #4b286d;
+      text-decoration: none;
+    }
+
+    .bookmark-delete-btn {
+      margin-left: 8px;
+    }
+
+    .bookmark {
+      display: flex;
+      align-items: center;
+      width: 94%;
+      overflow: hidden;
+      padding: 5px 10px;
+    }
+
+    .bookmark-favicon {
+      width: 16px;
+      height: 16px;
+      margin-right: 8px;
+    }
+
+    .content-container {
+      display: flex;
+      align-items: center;
+      min-width: 0;
+      flex: 1;
+      overflow: hidden;
+    }
+
+    .delete-btn {
+      flex-shrink: 0;
+    }
+
+    /* Back Button Styles - visually similar to folder but smaller and different color */
+    li.back-btn {
+      background-color: #ffe6e6;
+      border: 1px solid #ffb3b3;
+      font-weight: bold;
+      color: #d9534f;
+      cursor: pointer;
+      box-shadow: 0px 2px 4px rgba(217, 83, 79, 0.08);
+      text-align: center;
+      font-size: 0.95em;
+      transition: background 0.2s, transform 0.1s;
+      border-radius: 8px;
+    }
+
+    li.back-btn:hover {
+      background-color: #ffd6d6;
+      color: #a71d2a;
+      transform: translateY(-1px) scale(1.03);
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Private Bookmarks</h1>
+
+  <!-- Login Page -->
+  <div id="login-section">
+    <form id="login-form">
+      <input type="password" id="password" placeholder="Enter your password" required />
+      <button type="submit">Unlock</button>
+    </form>
+  </div>
+
+  <!-- Main Page -->
+  <div id="bookmarks-section" class="hidden">
+
+    <!-- Icon Bar for Actions -->
+    <div class="icon-bar">
+      <button id="create-folder-btn">
+        <img src="icons/new-folder.svg" alt="New Folder">
+        <span class="tooltip">New Folder</span>
+      </button>
+      <button id="toggle-bookmark-form">
+        <img src="icons/bookmark.svg" alt="New Bookmark">
+        <span class="tooltip">New Bookmark</span>
+      </button>
+      <button id="import-button">
+        <img src="icons/import.svg" alt="Import Data">
+        <span class="tooltip">Import Data</span>
+      </button>
+      <button id="export-button">
+        <img src="icons/export.svg" alt="Export Data">
+        <span class="tooltip">Export Data</span>
+      </button>
+      <button id="logout-button">
+        <img src="icons/lock.svg" alt="Lock">
+        <span class="tooltip">Lock</span>
+      </button>      
+      <button id="save-current-tab">
+        <img src="icons/save-tab.svg" alt="Save Current Tab">
+        <span class="tooltip">Save Current Tab</span>
+      </button>
+    </div>
+
+    <!-- Filter Global Toggle -->
+    <div class="search-container">
+      <input type="text" id="bookmark-search" placeholder="Search bookmarks..." />
+      <button class="clear-search-btn" id="clear-search-btn">✕</button>
+      <div class="toggle-wrapper">
+        <label class="switch">
+          <input type="checkbox" id="filter-toggle">
+          <span class="slider round"></span>
+        </label>
+        <span class="search-toggle-label">All Folders</span>
+      </div>
+    </div>
+
+    <!-- Add New Bookmark Form -->
+    <form id="bookmark-form">
+      <input type="text" id="url" placeholder="Bookmark URL" required />
+      <input type="text" id="title" placeholder="Bookmark Title" required />
+      <button type="submit" id="add-bookmark">Add Bookmark</button>
+    </form>
+
+    <!-- Display Bookmarks + Folders -->
+    <ul id="bookmarks-list">
+      <div class="folders-container"></div>
+    </ul>
+
+  </div>
+
+  <script type="module" src="popup.js"></script>
+
+</body>
+</html>

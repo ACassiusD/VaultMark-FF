@@ -1,0 +1,1 @@
+export const MASTER_PASSWORD_KEY = "auth_secret"; 
