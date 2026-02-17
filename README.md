@@ -44,6 +44,25 @@ A secure Firefox extension that allows you to store and organize your bookmarks 
 - **Physical Access** - Someone with direct access to your computer and browser
 - **Browser Vulnerabilities** - Exploits that can access extension data
 
+## 📦 Packaging for submission (AMO)
+
+AMO requires **forward slashes** in the ZIP (e.g. `icons/bookmark.svg`). On Windows, `Compress-Archive` can create `icons\bookmark.svg`, which fails validation.
+
+**Recommended:** run the pack script from the extension folder (where `manifest.json` is):
+
+```powershell
+.\pack.ps1
+```
+
+This creates `Private-Bookmarks-1.1.zip` in the parent folder with correct path separators.
+
+**Alternative (Git Bash or WSL):** from the extension folder:
+```bash
+zip -r ../Private-Bookmarks-1.1.zip . -x "*.git*" -x "README.md" -x "pack.ps1"
+```
+
+Then upload the `.zip` at [addons.mozilla.org](https://addons.mozilla.org) → Developer Hub → Submit a New Add-on.
+
 ## 📦 Installation
 
 ### For Development/Testing

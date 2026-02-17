@@ -19,6 +19,17 @@
     document.getElementById("close-btn").style.display = "block";
   }
 
+  function uint8ArrayToBase64(bytes) {
+    const CHUNK = 8192;
+    let binary = "";
+    const arr = new Uint8Array(bytes);
+    for (let i = 0; i < arr.length; i += CHUNK) {
+      const chunk = arr.subarray(i, Math.min(i + CHUNK, arr.length));
+      binary += String.fromCharCode.apply(null, chunk);
+    }
+    return btoa(binary);
+  }
+
   async function encryptAndSave(data) {
     const result = await browser.storage.local.get(MASTER_PASSWORD_KEY);
     const password = result[MASTER_PASSWORD_KEY];
@@ -52,7 +63,7 @@
       derivedKey,
       encodedData
     );
-    const encryptedData = btoa(String.fromCharCode(...new Uint8Array(encrypted)));
+    const encryptedData = uint8ArrayToBase64(encrypted);
     const ivB64 = btoa(String.fromCharCode(...iv));
     await browser.storage.local.set({
       [BOOKMARKS_AND_FOLDERS_KEY]: { encryptedData, iv: ivB64 },

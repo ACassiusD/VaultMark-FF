@@ -41,6 +41,18 @@ class EncryptionService {
       }
     }
   
+    /** Convert Uint8Array to base64 in chunks to avoid "too many function arguments" for large payloads. */
+    static _uint8ArrayToBase64(bytes) {
+      const CHUNK = 8192;
+      let binary = "";
+      const arr = new Uint8Array(bytes);
+      for (let i = 0; i < arr.length; i += CHUNK) {
+        const chunk = arr.subarray(i, Math.min(i + CHUNK, arr.length));
+        binary += String.fromCharCode.apply(null, chunk);
+      }
+      return btoa(binary);
+    }
+
     static async encrypt(data) {
       let encryptionKey = await this.deriveKeyFromHashedPassword();
       const iv = crypto.getRandomValues(new Uint8Array(12));
@@ -51,7 +63,7 @@ class EncryptionService {
         encodedData
       );
       return {
-        encryptedData: btoa(String.fromCharCode(...new Uint8Array(encrypted))),
+        encryptedData: this._uint8ArrayToBase64(encrypted),
         iv: btoa(String.fromCharCode(...iv)),
       };
     }

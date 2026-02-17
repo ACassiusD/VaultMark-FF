@@ -1,6 +1,7 @@
 // Inline constants
 const MASTER_PASSWORD_KEY = "auth_secret";
 const BOOKMARKS_AND_FOLDERS_KEY = "folders";
+const DEFAULT_SAVE_FOLDER_KEY = "defaultSaveFolderId";
 
 // Inline EncryptionService for background script
 class EncryptionService {
@@ -56,9 +57,20 @@ class EncryptionService {
         encodedData
       );
       return {
-        encryptedData: btoa(String.fromCharCode(...new Uint8Array(encrypted))),
+        encryptedData: EncryptionService._uint8ArrayToBase64(encrypted),
         iv: btoa(String.fromCharCode(...iv)),
       };
+    }
+
+    static _uint8ArrayToBase64(bytes) {
+      const CHUNK = 8192;
+      let binary = "";
+      const arr = new Uint8Array(bytes);
+      for (let i = 0; i < arr.length; i += CHUNK) {
+        const chunk = arr.subarray(i, Math.min(i + CHUNK, arr.length));
+        binary += String.fromCharCode.apply(null, chunk);
+      }
+      return btoa(binary);
     }
   
     static async decrypt(encryptedData, iv) {    
@@ -117,8 +129,21 @@ browser.runtime.onMessage.addListener((message, _sender, sendResponse) => {
   return true; // keep channel open for async sendResponse
 });
 
+/** Find a folder by id in the tree (root + subfolders). */
+function findFolderById(folders, id) {
+  if (!folders || typeof folders !== "object") return null;
+  if (folders.id === id) return folders;
+  if (Array.isArray(folders.subfolders)) {
+    for (const sub of folders.subfolders) {
+      const found = findFolderById(sub, id);
+      if (found) return found;
+    }
+  }
+  return null;
+}
+
 /**
- * Saves the given tab as a bookmark to the root folder.
+ * Saves the given tab as a bookmark to the default save folder (or root if unset).
  * Skips duplicates. Used by context menu and keyboard command.
  */
 async function savePageFromTab(tab) {
@@ -126,8 +151,9 @@ async function savePageFromTab(tab) {
   if (!url || !title) return;
 
   try {
-    const result = await browser.storage.local.get([BOOKMARKS_AND_FOLDERS_KEY]);
+    const result = await browser.storage.local.get([BOOKMARKS_AND_FOLDERS_KEY, DEFAULT_SAVE_FOLDER_KEY]);
     const storedData = result[BOOKMARKS_AND_FOLDERS_KEY] || null;
+    const defaultFolderId = result[DEFAULT_SAVE_FOLDER_KEY] || null;
 
     let folderData;
     if (storedData && storedData.encryptedData && storedData.iv) {
@@ -141,11 +167,15 @@ async function savePageFromTab(tab) {
       };
     }
 
-    const rootFolder = folderData;
-    const duplicate = rootFolder.bookmarks.find((bookmark) => bookmark.url === url);
+    const targetFolder = defaultFolderId
+      ? findFolderById(folderData, defaultFolderId)
+      : folderData;
+    const folderToUse = targetFolder || folderData;
+
+    const duplicate = folderToUse.bookmarks.find((bookmark) => bookmark.url === url);
     if (!duplicate) {
       const bookmarkId = `bookmark-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-      rootFolder.bookmarks.push({
+      folderToUse.bookmarks.push({
         id: bookmarkId,
         url,
         title,
