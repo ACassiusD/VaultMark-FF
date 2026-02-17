@@ -42,12 +42,13 @@
       transform: translateY(-1px);
     }
 
-    /* Icon Bar */
+    /* Icon Bar — consistent hitbox, hover circle, subtle default */
     .icon-bar {
       display: flex;
-      justify-content: center; /* Center icons */
-      gap: 5px;
-      width: 100%; /* Ensure the icon bar takes full width */
+      justify-content: center;
+      gap: 8px;
+      width: 100%;
+      margin-bottom: 14px;
     }
 
     .icon-bar button {
@@ -55,6 +56,19 @@
       border: none;
       cursor: pointer;
       position: relative;
+      width: 40px;
+      height: 40px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      opacity: 0.9;
+      transition: opacity 0.15s, background 0.15s;
+    }
+
+    .icon-bar button:hover {
+      opacity: 1;
+      background: rgba(0, 0, 0, 0.06);
     }
 
     .icon-bar button img {
@@ -97,56 +111,55 @@
       width: 100%;
     }
 
-    /* Bookmark List */
+    /* Bookmark List — dense, scannable; no horizontal scroll */
     ul {
       list-style: none;
       padding: 0;
       margin: 0;
       width: 100%;
+      min-width: 0;
       max-height: 442px;
+      overflow-x: hidden;
       overflow-y: auto;
     }
 
     li {
       display: flex;
       align-items: center;
-      padding: 10px;
-      margin-bottom: 6px;
-      border: 1px solid #ddd;
-      border-radius: 6px;
-      background-color: white;
-      transition: transform 0.2s, box-shadow 0.2s;
+      padding: 8px 12px;
+      margin-bottom: 0;
+      border: none;
+      border-radius: 0;
+      background-color: transparent;
+      transition: background 0.12s;
     }
 
     li:hover {
-      transform: translateY(-2px);
-      box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+      background-color: rgba(0, 0, 0, 0.03);
     }
 
-    /* Folder List Item */
+    /* Folder area — compact chips, filter-level prominence */
     .folders-container {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
-      gap: 10px;
+      gap: 6px;
       width: 100%;
-      padding-top: 5px;
-      padding-bottom: 5px;
+      padding: 6px 12px 10px 12px;
       box-sizing: border-box;
       overflow: visible;
-      padding-left: 6px; /* Add left padding to prevent edge clipping */
     }
 
     li.folder,
     li.back-btn,
     li.folder-placeholder {
-      height: 40px;
-      min-height: 40px;
-      width: 98%; /* Prevent flush edge, allow for expansion */
+      height: 28px;
+      min-height: 28px;
+      width: 98%;
       display: flex;
       align-items: center;
       justify-content: center;
       box-sizing: border-box;
-      padding: 0 12px;
+      padding: 0 10px;
     }
 
     li.folder-placeholder {
@@ -160,26 +173,26 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      padding: 5px;
-      border-radius: 8px;
-      background-color: #e6f7ff;
-      border: 1px solid #b3e0ff;
-      font-weight: bold;
-      transition: background 0.2s, transform 0.1s;
+      padding: 0 10px;
+      border-radius: 999px;
+      background-color: #e8f4fc;
+      border: 1px solid #c5e0f7;
+      font-weight: 600;
+      font-size: 0.875em;
+      transition: background 0.15s, border-color 0.15s;
       cursor: pointer;
-      box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.1); /* Added shadow */
+      box-shadow: none;
       text-align: center;
     }
 
     li.folder:hover {
-      background-color: #d0eaff;
-      transform: translateY(-1px);
-      box-shadow: 0px 3px 6px rgba(0, 123, 255, 0.15);
+      background-color: #d4ebf9;
+      border-color: #a8d4f0;
     }
 
     .folder-name {
-      font-size: 1em;
-      color: #007bff;
+      font-size: inherit;
+      color: #0066b8;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
@@ -188,42 +201,68 @@
 
     .folder-actions {
       display: flex;
-      gap: 10px; /* Increased space between buttons */
+      gap: 6px;
+      align-items: center;
     }
 
     .delete-folder-btn {
-      padding: 6px 12px; /* Adjusted padding */
+      padding: 2px 6px;
       border: none;
-      border-radius: 5px;
-      background-color: #dc3545;
+      border-radius: 4px;
+      background-color: #adb5bd;
       color: white;
-      font-size: 0.75em; /* Adjusted font size */
-      font-weight: bold;
+      font-size: 0.7em;
+      font-weight: 600;
       cursor: pointer;
-      transition: background 0.2s, transform 0.1s;
+      transition: background 0.15s, opacity 0.15s;
+      opacity: 0;
+    }
+
+    li.folder:hover .delete-folder-btn {
+      opacity: 1;
     }
 
     .delete-folder-btn:hover {
-      background-color: #a71d2a;
-      transform: scale(1.05);
+      background-color: #dc3545;
     }
 
+    /* Bookmark rows — tight list: 34–36px, thin divider, X inside row */
     li.bookmark {
-      width: 94.0%;
+      position: relative;
+      width: 100%;
+      min-width: 0;
+      max-width: 100%;
       display: flex;
       align-items: center;
-      justify-content: space-between;
+      padding: 6px 12px 6px 12px;
+      margin-bottom: 0;
+      min-height: 36px;
+      border-bottom: 1px solid #eee;
+      background: transparent;
+      overflow: hidden;
+      box-sizing: border-box;
     }
 
-    li.bookmark img {
-      width: 20px;
-      height: 20px;
+    li.bookmark:hover {
+      background-color: #f5f8fc;
+    }
+
+    li.bookmark img,
+    li.bookmark .bookmark-favicon {
+      width: 18px;
+      height: 18px;
+      min-width: 18px;
       margin-right: 10px;
       border-radius: 50%;
+      object-fit: cover;
+      flex-shrink: 0;
     }
 
-    li.bookmark a {
+    li.bookmark a,
+    li.bookmark .bookmark-link {
       flex-grow: 1;
+      min-width: 0;
+      padding-right: 32px;
       text-decoration: none;
       color: #007bff;
       font-size: 0.9em;
@@ -232,20 +271,32 @@
       overflow: hidden;
     }
 
-    li.bookmark a:hover {
+    li.bookmark a:hover,
+    li.bookmark .bookmark-link:hover {
       text-decoration: underline;
     }
 
-    li.bookmark button {
-      background-color: #dc3545;
+    li.bookmark .delete-btn {
+      position: absolute;
+      right: 10px;
+      top: 50%;
+      transform: translateY(-50%);
+      opacity: 0;
+      background-color: #adb5bd;
       color: white;
-      padding: 6px 10px;
-      font-size: 0.8em;
+      padding: 4px 8px;
+      font-size: 0.75em;
       border-radius: 4px;
+      transition: opacity 0.15s, background 0.15s;
+      flex-shrink: 0;
     }
 
-    li.bookmark button:hover {
-      background-color: #a71d2a;
+    li.bookmark:hover .delete-btn {
+      opacity: 1;
+    }
+
+    li.bookmark .delete-btn:hover {
+      background-color: #dc3545;
     }
 
     /* Sections */
@@ -270,9 +321,17 @@
       width: 100%;
       padding-bottom: 5px; /* Reduced padding */
     }
-    /* Ensure the bookmark list always takes full width */
+    /* Constrain width and prevent horizontal scroll */
+    #main-view {
+      width: 100%;
+      min-width: 0;
+      max-width: 100%;
+      overflow-x: hidden;
+    }
     #bookmarks-section, #bookmarks-list {
       width: 100%;
+      min-width: 0;
+      overflow-x: hidden;
     }
 
     .clear-search {
@@ -350,21 +409,29 @@
       display: flex;
       align-items: center;
       background: white;
-      border: 1px solid #ccc;
-      border-radius: 6px;
+      border: 1px solid #e0e0e0;
+      border-radius: 8px;
       width: 100%;
       max-width: 500px;
-      box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.1);
-      margin: 0.5em auto; /* Center the container */
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+      margin: 0.5em auto;
+    }
+
+    .search-container::before {
+      content: "⌕";
+      font-size: 16px;
+      padding-left: 12px;
+      color: #999;
+      pointer-events: none;
     }
 
     #bookmark-search {
       flex: 1;
       border: none;
       outline: none;
-      padding: 8px 10px;
+      padding: 10px 12px 10px 4px;
       font-size: 14px;
-      border-radius: 6px;
+      border-radius: 8px;
       background: transparent;
     }
 
@@ -398,10 +465,11 @@
     }
 
     /* Filtered Bookmark Styles */
-    .bookmark-content-container {
+    li.bookmark .bookmark-content-container {
       flex: 1;
       min-width: 0;
       overflow: hidden;
+      padding-right: 32px;
     }
 
     .bookmark-link {
@@ -436,18 +504,13 @@
       margin-left: 8px;
     }
 
-    .bookmark {
-      display: flex;
-      align-items: center;
-      width: 94%;
-      overflow: hidden;
-      padding: 5px 10px;
-    }
-
     .bookmark-favicon {
-      width: 16px;
-      height: 16px;
-      margin-right: 8px;
+      width: 20px;
+      height: 20px;
+      min-width: 20px;
+      margin-right: 10px;
+      border-radius: 50%;
+      object-fit: cover;
     }
 
     .content-container {
@@ -462,24 +525,24 @@
       flex-shrink: 0;
     }
 
-    /* Back Button Styles - visually similar to folder but smaller and different color */
+    /* Back button — chip style, lighter */
     li.back-btn {
-      background-color: #ffe6e6;
-      border: 1px solid #ffb3b3;
-      font-weight: bold;
-      color: #d9534f;
+      background-color: #fce8e8;
+      border: 1px solid #f0c0c0;
+      font-weight: 600;
+      color: #c44;
       cursor: pointer;
-      box-shadow: 0px 2px 4px rgba(217, 83, 79, 0.08);
+      box-shadow: none;
       text-align: center;
-      font-size: 0.95em;
-      transition: background 0.2s, transform 0.1s;
-      border-radius: 8px;
+      font-size: 0.875em;
+      transition: background 0.15s, border-color 0.15s;
+      border-radius: 999px;
     }
 
     li.back-btn:hover {
-      background-color: #ffd6d6;
+      background-color: #f8d8d8;
+      border-color: #e8a8a8;
       color: #a71d2a;
-      transform: translateY(-1px) scale(1.03);
     }
 
     /* ---- Options / Settings view (card + 8px grid) ---- */
