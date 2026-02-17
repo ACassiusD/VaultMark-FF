@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Import bookmarks - VaultMarks</title>
+  <style>
+    body { font-family: sans-serif; padding: 24px; max-width: 400px; margin: 40px auto; }
+    h1 { font-size: 1.2rem; }
+    #status { margin-top: 16px; padding: 12px; border-radius: 6px; }
+    #status.success { background: #d4edda; color: #155724; }
+    #status.error { background: #f8d7da; color: #721c24; }
+    #status.info { background: #e7f3ff; color: #004085; }
+    button { margin-top: 12px; padding: 8px 16px; cursor: pointer; }
+  </style>
+</head>
+<body>
+  <h1>Import bookmarks</h1>
+  <p id="message">Select your VaultMarks backup file (JSON).</p>
+  <input type="file" id="file-input" accept="application/json" style="display: block; margin-top: 12px;">
+  <div id="status" style="display: none;"></div>
+  <button id="close-btn" style="display: none;">Close</button>
+
+  <script src="import.js"></script>
+</body>
+</html>

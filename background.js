@@ -83,15 +83,38 @@ class EncryptionService {
     }      
 }
 
-// Add the context menu for tabs
-browser.runtime.onInstalled.addListener(() => {
-  browser.contextMenus.create({
-    id: "saveTabToBookmarks",
-    title: "Save Tab to Bookmarks",
-    contexts: ["all"],
-  }).catch((error) => {
+// Add the context menu for tabs (async so we can await create() where it returns a Promise, e.g. Chrome)
+browser.runtime.onInstalled.addListener(async () => {
+  try {
+    const createResult = browser.contextMenus.create({
+      id: "saveTabToBookmarks",
+      title: "Save Tab to Bookmarks",
+      contexts: ["all"],
+    });
+    if (createResult && typeof createResult.then === "function") {
+      await createResult;
+    }
+  } catch (error) {
     console.error("Error creating context menu:", error);
-  });
+  }
+});
+
+// Handle import from import.html tab (popup closes when file picker opens, so import runs in a tab)
+browser.runtime.onMessage.addListener((message, _sender, sendResponse) => {
+  if (message.type !== "importBookmarks" || !message.data) {
+    return;
+  }
+  (async () => {
+    try {
+      const { encryptedData, iv } = await EncryptionService.encrypt(JSON.stringify(message.data));
+      await browser.storage.local.set({ [BOOKMARKS_AND_FOLDERS_KEY]: { encryptedData, iv } });
+      sendResponse({ success: true });
+    } catch (err) {
+      console.error("Import failed:", err);
+      sendResponse({ success: false, error: (err && err.message) ? err.message : String(err) });
+    }
+  })();
+  return true; // keep channel open for async sendResponse
 });
 
 // Handle context menu clicks

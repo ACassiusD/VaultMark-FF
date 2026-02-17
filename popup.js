@@ -89,6 +89,7 @@ const filterToggle = document.getElementById("filter-toggle");
 const saveCurrentTabButton = document.getElementById("save-current-tab");
 
 const BOOKMARKS_AND_FOLDERS_KEY = "folders";
+const DEFAULT_SAVE_FOLDER_KEY = "defaultSaveFolderId";
 const LAST_AUTH_TIME_KEY = "lastAuthTime"; // Key to store the last time the user entered their password
 const AUTH_GRACE_PERIOD = 5 * 60 * 1000; // 5 minutes in milliseconds
 
@@ -312,10 +313,14 @@ const saveToStorage = async (key, value) => {
 // Save data to Chrome storage (Encrypt before saving)
 const saveToStorageEncrypted = async (key, value) => {
   try {
+    console.log("[VaultMarks] saveToStorageEncrypted: deriving key and encrypting...");
     const { encryptedData, iv } = await EncryptionService.encrypt(JSON.stringify(value));
+    console.log("[VaultMarks] saveToStorageEncrypted: encrypt done, writing to storage");
     await saveToStorage(key, { encryptedData, iv }); // Using the generic function
+    console.log("[VaultMarks] saveToStorageEncrypted: write done");
   } catch (error) {
-    console.error("Error encrypting data:", error);
+    console.error("[VaultMarks] saveToStorageEncrypted error:", error);
+    throw error; // Propagate so callers (e.g. import) can show the right error
   }
 };
 
@@ -330,14 +335,20 @@ const getFromStorage = async (key) => {
 const getAllBookmarkAndFolderData = async () => {
   try {
     const storedData = await getFromStorage(BOOKMARKS_AND_FOLDERS_KEY);
-    if (!storedData) return null;
-    //Decrypt
+    if (!storedData) {
+      console.log("[VaultMarks] getAllBookmarkAndFolderData: no stored data (null)");
+      return null;
+    }
+    if (!storedData.encryptedData || !storedData.iv) {
+      console.log("[VaultMarks] getAllBookmarkAndFolderData: stored data missing encryptedData or iv", Object.keys(storedData));
+      return null;
+    }
     const { encryptedData, iv } = storedData;
     const decryptedData = await EncryptionService.decrypt(encryptedData, iv);
-
+    console.log("[VaultMarks] getAllBookmarkAndFolderData: decrypted, root id:", decryptedData && decryptedData.id, "bookmarks:", decryptedData && decryptedData.bookmarks && decryptedData.bookmarks.length);
     return decryptedData;
   } catch (error) {
-    console.error("Error decrypting data:", error);
+    console.error("[VaultMarks] getAllBookmarkAndFolderData error:", error);
 
     return null;
   }
@@ -366,6 +377,8 @@ const getHashedPassword = async () => {
 const loadBookmarks = async () => {
   const data = await getAllBookmarkAndFolderData();
   const folder = findFolderById(data, currentFolderId);
+  if (!data) console.log("[VaultMarks] loadBookmarks: no data, nothing to show");
+  else if (!folder) console.log("[VaultMarks] loadBookmarks: folder not found for id", currentFolderId);
   let foldersHtml = "";
 
   if (folder) {
@@ -406,6 +419,7 @@ const loadBookmarks = async () => {
     attachBookmarkEventListeners();
     attachDragAndDropListeners();
   }
+  await refreshDefaultFolderSelect(data);
 };
 
 // Find folder by ID (recursive)
@@ -445,46 +459,64 @@ const findParentFolderById = (folder, id, parent = null) => {
   return null; // No parent found
 };
 
-// Import data from a JSON file (replaces existing bookmarks and folders after confirmation)
+// Build a flat list of folders for the default-save-folder dropdown (id + display name with indent)
+const getAllFoldersFlat = (folder, acc = [], prefix = "") => {
+  if (!folder || typeof folder !== "object") return acc;
+  acc.push({ id: folder.id, displayName: prefix + folder.name });
+  if (Array.isArray(folder.subfolders)) {
+    for (const sub of folder.subfolders) {
+      getAllFoldersFlat(sub, acc, prefix + "  ");
+    }
+  }
+  return acc;
+};
+
+// Populate the default save folder dropdown and restore selected value from storage
+const refreshDefaultFolderSelect = async (data) => {
+  const select = document.getElementById("default-save-folder");
+  if (!select) return;
+  let savedId = await getFromStorage(DEFAULT_SAVE_FOLDER_KEY);
+  select.innerHTML = "";
+  const currentOption = document.createElement("option");
+  currentOption.value = "";
+  currentOption.textContent = "Current folder";
+  select.appendChild(currentOption);
+  const validIds = new Set();
+  if (data) {
+    const flat = getAllFoldersFlat(data);
+    for (const { id, displayName } of flat) {
+      validIds.add(id);
+      const opt = document.createElement("option");
+      opt.value = id;
+      opt.textContent = displayName;
+      select.appendChild(opt);
+    }
+  }
+  // Only apply saved value if that folder still exists; otherwise clear to "Current folder"
+  if (savedId && !validIds.has(savedId)) {
+    savedId = null;
+    await saveToStorage(DEFAULT_SAVE_FOLDER_KEY, null);
+  }
+  select.value = savedId || "";
+};
+
+// Validate backup root: must have id, name, and arrays for bookmarks and subfolders
+const isValidBookmarkBackup = (obj) => {
+  if (!obj || typeof obj !== "object") return false;
+  if (typeof obj.id !== "string" || typeof obj.name !== "string") return false;
+  if (!Array.isArray(obj.bookmarks)) return false;
+  if (!Array.isArray(obj.subfolders)) return false;
+  return true;
+};
+
+// Import: open the import tab (file picker in popup would close the popup, so we use a tab that stays open)
 const importData = async () => {
+  console.log("[VaultMarks] Import button clicked, opening import tab");
   try {
-    const input = document.createElement("input");
-    input.type = "file";
-    input.accept = "application/json";
-
-    input.addEventListener("change", async (event) => {
-      const file = event.target.files[0];
-      if (!file) return;
-
-      const reader = new FileReader();
-      reader.onload = async (e) => {
-        try {
-          const importedData = JSON.parse(e.target.result);
-          if (!importedData || typeof importedData !== 'object') {
-            alert("Invalid file format.");
-            return;
-          }
-
-          const confirmImport = confirm("This will replace all existing bookmarks. Continue?");
-          if (!confirmImport) return;
-
-          // Save the imported data with encryption
-          await saveBookmarkData(importedData);
-          alert("Bookmarks imported successfully!");
-          loadBookmarks();
-        } catch (error) {
-          console.error("Error parsing file:", error);
-          alert("Failed to import data. Ensure the file is a valid JSON backup.");
-        }
-      };
-
-      reader.readAsText(file);
-    });
-
-    input.click();
+    await browser.tabs.create({ url: browser.runtime.getURL("import.html") });
   } catch (error) {
-    console.error("Error importing data:", error);
-    alert("Failed to import data.");
+    console.error("Error opening import tab:", error);
+    alert("Failed to open import page.");
   }
 };
 
@@ -617,7 +649,11 @@ const initializeFolderStructure = async () => {
       bookmarks: [],
       subfolders: []
     };
-    await saveBookmarkData(existingData);
+    try {
+      await saveBookmarkData(existingData);
+    } catch (error) {
+      console.error("Error initializing folder structure:", error);
+    }
   }
 };
 
@@ -675,32 +711,32 @@ saveCurrentTabButton.addEventListener("click", async () => {
       const title = tab.title;
       const favIconUrl = tab.favIconUrl || "default-icon.png"; // Default icon if no favicon available
 
-      // Retrieve folder structure
+      // Retrieve folder structure and decide target folder (default or current)
       const data = await getAllBookmarkAndFolderData();
-      const currentFolder = findFolderById(data, currentFolderId);
+      const defaultFolderId = await getFromStorage(DEFAULT_SAVE_FOLDER_KEY);
+      const targetFolderId = defaultFolderId || currentFolderId;
+      const targetFolder = findFolderById(data, targetFolderId);
 
-      if (!currentFolder) {
-        alert("No active folder found. Please ensure a folder is selected.");
+      if (!targetFolder) {
+        alert("No target folder found. Please ensure a folder is selected or set a valid default.");
         return;
       }
 
-      // Check for duplicates in the current folder
-      const duplicate = currentFolder.bookmarks.find((bookmark) => bookmark.url === url);
+      // Check for duplicates in the target folder
+      const duplicate = targetFolder.bookmarks.find((bookmark) => bookmark.url === url);
       if (duplicate) {
         const confirmDuplicate = confirm(`Duplicate Bookmark Detected. Do you want to save it again?`);
         if (!confirmDuplicate) return;
       }
 
-      // Add bookmark to the current folder with unique ID
-      currentFolder.bookmarks.push({ 
+      // Add bookmark to the target folder with unique ID
+      targetFolder.bookmarks.push({ 
         id: `bookmark-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
         url, 
         title, 
         favIconUrl 
       });
-      await saveBookmarkData(data) // Save updated structure
-
-      // Reload bookmarks
+      await saveBookmarkData(data); // Save updated structure
       loadBookmarks();
     } else {
       alert("No active tab found.");
@@ -717,38 +753,37 @@ bookmarkForm.addEventListener("submit", async (e) => {
   const url = document.getElementById("url").value.trim();
   const title = document.getElementById("title").value.trim();
 
-  // Retrieve folder structure
-  const data = await getAllBookmarkAndFolderData();
-  const currentFolder = findFolderById(data, currentFolderId);
+  try {
+    const data = await getAllBookmarkAndFolderData();
+    const currentFolder = findFolderById(data, currentFolderId);
 
-  if (!currentFolder) {
-    alert("No active folder found. Please ensure a folder is selected.");
-    return;
+    if (!currentFolder) {
+      alert("No active folder found. Please ensure a folder is selected.");
+      return;
+    }
+
+    const duplicate = currentFolder.bookmarks.find((bookmark) => bookmark.url === url);
+    if (duplicate) {
+      const confirmDuplicate = confirm(`Duplicate Bookmark Detected. Do you want to save it again?`);
+      if (!confirmDuplicate) return;
+    }
+
+    const urlObj = new URL(url);
+    const favIconUrl = `${urlObj.protocol}//${urlObj.hostname}/favicon.ico`;
+
+    currentFolder.bookmarks.push({
+      id: `bookmark-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+      url,
+      title,
+      favIconUrl
+    });
+    await saveBookmarkData(data);
+    loadBookmarks();
+    bookmarkForm.reset();
+  } catch (error) {
+    console.error("Error saving bookmark:", error);
+    alert("Failed to save bookmark. If you just logged in, try again.");
   }
-
-  // Check for duplicates in the current folder
-  const duplicate = currentFolder.bookmarks.find((bookmark) => bookmark.url === url);
-  if (duplicate) {
-    const confirmDuplicate = confirm(`Duplicate Bookmark Detected. Do you want to save it again?`);
-    if (!confirmDuplicate) return;
-  }
-
-  // Generate favicon URL from the bookmark URL
-  const urlObj = new URL(url);
-  const favIconUrl = `${urlObj.protocol}//${urlObj.hostname}/favicon.ico`;
-
-  // Add bookmark to the current folder with unique ID
-  currentFolder.bookmarks.push({ 
-    id: `bookmark-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-    url, 
-    title,
-    favIconUrl
-  });
-  await saveBookmarkData(data); // Save updated structure
-
-  // Reload bookmarks and reset the form
-  loadBookmarks();
-  bookmarkForm.reset();
 });
 
 // Handle Folder Creation
@@ -756,19 +791,24 @@ document.getElementById("create-folder-btn").addEventListener("click", async () 
   const folderName = prompt("Enter folder name:");
   if (!folderName) return;
 
-  const data = await getAllBookmarkAndFolderData();
-  const currentFolder = findFolderById(data, currentFolderId);
+  try {
+    const data = await getAllBookmarkAndFolderData();
+    const currentFolder = findFolderById(data, currentFolderId);
 
-  if (currentFolder) {
-    const newFolder = {
-      id: `folder-${Date.now()}`, // Unique folder ID
-      name: folderName,
-      bookmarks: [],
-      subfolders: [],
-    };
-    currentFolder.subfolders.push(newFolder); // Add new folder to the current folder
-    await saveBookmarkData(data); // Save the updated folder structure
-    loadBookmarks(); // Reload bookmarks and folders
+    if (currentFolder) {
+      const newFolder = {
+        id: `folder-${Date.now()}`,
+        name: folderName,
+        bookmarks: [],
+        subfolders: [],
+      };
+      currentFolder.subfolders.push(newFolder);
+      await saveBookmarkData(data);
+      loadBookmarks();
+    }
+  } catch (error) {
+    console.error("Error creating folder:", error);
+    alert("Failed to create folder. If you just logged in, try again.");
   }
 });
 
@@ -785,6 +825,12 @@ document.addEventListener("DOMContentLoaded", () => {
     setTimeout(() => {
       document.getElementById("bookmark-form").style.display = "none";
     }, 500);
+  });
+
+  // Persist default save folder when user changes the dropdown
+  document.getElementById("default-save-folder").addEventListener("change", async (e) => {
+    const value = e.target.value || null;
+    await saveToStorage(DEFAULT_SAVE_FOLDER_KEY, value);
   });
 });
 
@@ -818,16 +864,20 @@ const attachBookmarkEventListeners = () => {
   document.querySelectorAll(".delete-btn").forEach((button) =>
     button.addEventListener("click", async (e) => {
       const bookmarkId = button.dataset.bookmarkId;
-      const data = await getAllBookmarkAndFolderData();
-      const folder = findFolderById(data, currentFolderId);
+      try {
+        const data = await getAllBookmarkAndFolderData();
+        const folder = findFolderById(data, currentFolderId);
 
-      if (folder) {
-        // Remove the bookmark
-        folder.bookmarks = folder.bookmarks.filter(
-          (bookmark) => bookmark.id !== bookmarkId
-        );
-        await saveBookmarkData(data); // Save the updated data
-        loadBookmarks(); // Reload bookmarks
+        if (folder) {
+          folder.bookmarks = folder.bookmarks.filter(
+            (bookmark) => bookmark.id !== bookmarkId
+          );
+          await saveBookmarkData(data);
+          loadBookmarks();
+        }
+      } catch (error) {
+        console.error("Error deleting bookmark:", error);
+        alert("Failed to delete bookmark.");
       }
     })
   );
@@ -845,27 +895,29 @@ const attachFolderEventListeners = async () => {
     });
 
     folderElement.querySelector(".delete-folder-btn").addEventListener("click", async (e) => {
-      e.stopPropagation(); // Prevent the folder from opening when clicking delete
+      e.stopPropagation();
       const folderIdToDelete = folderElement.dataset.folderId;
-      const data = await getAllBookmarkAndFolderData();
-      const parentFolder = findParentFolderById(data, folderIdToDelete);
+      try {
+        const data = await getAllBookmarkAndFolderData();
+        const parentFolder = findParentFolderById(data, folderIdToDelete);
 
-      if (parentFolder) {
-        // Find the folder name
-        const folderToDelete = parentFolder.subfolders.find(folder => folder.id === folderIdToDelete);
-        const folderName = folderToDelete ? folderToDelete.name : "this folder";
+        if (parentFolder) {
+          const folderToDelete = parentFolder.subfolders.find(folder => folder.id === folderIdToDelete);
+          const folderName = folderToDelete ? folderToDelete.name : "this folder";
 
-        // Confirm deletion
-        const confirmDelete = confirm(`Are you sure you want to delete "${folderName}"? This cannot be undone.`);
-        if (!confirmDelete) return; // Exit if user cancels
+          const confirmDelete = confirm(`Are you sure you want to delete "${folderName}"? This cannot be undone.`);
+          if (!confirmDelete) return;
 
-        // Remove the folder from the parent's subfolders
-        parentFolder.subfolders = parentFolder.subfolders.filter(
-          (folder) => folder.id !== folderIdToDelete
-        );
+          parentFolder.subfolders = parentFolder.subfolders.filter(
+            (folder) => folder.id !== folderIdToDelete
+          );
 
-        await saveBookmarkData(data);
-        loadBookmarks();
+          await saveBookmarkData(data);
+          loadBookmarks();
+        }
+      } catch (error) {
+        console.error("Error deleting folder:", error);
+        alert("Failed to delete folder.");
       }
     });
   });
@@ -901,35 +953,37 @@ const attachDragAndDropListeners = () => {
       folderElement.classList.remove("drag-over");
 
       const folderId = folderElement.dataset.folderId;
-      const url = e.dataTransfer.getData("url"); // Get dragged URL
+      const url = e.dataTransfer.getData("url");
       const title = e.dataTransfer.getData("title");
       const favIconUrl = e.dataTransfer.getData("favIconUrl");
-      const bookmarkId = e.dataTransfer.getData("bookmarkId"); // Get dragged bookmark ID
+      const bookmarkId = e.dataTransfer.getData("bookmarkId");
 
-      if (url && folderId) {
+      if (!url || !folderId) return;
+
+      try {
         const data = await getAllBookmarkAndFolderData();
         const targetFolder = findFolderById(data, folderId);
 
         if (targetFolder) {
-          // Add the bookmark to the target folder with new ID
-          targetFolder.bookmarks.push({ 
+          targetFolder.bookmarks.push({
             id: `bookmark-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-            url, 
-            title, 
-            favIconUrl 
+            url,
+            title,
+            favIconUrl
           });
 
-          // Remove the bookmark from the current folder using ID
           const currentFolder = findFolderById(data, currentFolderId);
           if (currentFolder && bookmarkId) {
             currentFolder.bookmarks = currentFolder.bookmarks.filter(
               (bookmark) => bookmark.id !== bookmarkId
             );
           }
-          // Save updated data and reload bookmarks
           await saveBookmarkData(data);
           loadBookmarks();
         }
+      } catch (error) {
+        console.error("Error moving bookmark:", error);
+        alert("Failed to move bookmark.");
       }
     });
   });

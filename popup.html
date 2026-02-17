@@ -481,6 +481,29 @@
       color: #a71d2a;
       transform: translateY(-1px) scale(1.03);
     }
+
+    .default-save-folder-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      width: 100%;
+      max-width: 500px;
+      margin: 6px auto;
+    }
+    .default-save-folder-row label {
+      font-size: 14px;
+      color: #333;
+      white-space: nowrap;
+    }
+    .default-save-folder-row select {
+      flex: 1;
+      min-width: 0;
+      padding: 6px 8px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      font-size: 14px;
+      background: white;
+    }
   </style>
 </head>
 <body>
@@ -524,6 +547,14 @@
         <img src="icons/save-tab.svg" alt="Save Current Tab">
         <span class="tooltip">Save Current Tab</span>
       </button>
+    </div>
+
+    <!-- Default folder for Save Current Tab -->
+    <div class="default-save-folder-row">
+      <label for="default-save-folder">Save Tab to:</label>
+      <select id="default-save-folder" title="Choose which folder to use when saving the current tab (or use current folder)">
+        <option value="">Current folder</option>
+      </select>
     </div>
 
     <!-- Filter Global Toggle -->
