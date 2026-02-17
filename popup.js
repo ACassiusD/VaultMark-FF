@@ -832,6 +832,46 @@ document.addEventListener("DOMContentLoaded", () => {
     const value = e.target.value || null;
     await saveToStorage(DEFAULT_SAVE_FOLDER_KEY, value);
   });
+
+  // Open Firefox’s “Manage Extension Shortcuts” so user can assign a key for “Save page”
+  const optionsBtn = document.getElementById("options-btn");
+  const mainView = document.getElementById("main-view");
+  const settingsView = document.getElementById("settings-view");
+  const settingsBackBtn = document.getElementById("settings-back-btn");
+  const refreshShortcutDisplay = async () => {
+    const el = document.getElementById("current-shortcut-display");
+    if (!el || !browser.commands || typeof browser.commands.getAll !== "function") return;
+    try {
+      const commands = await browser.commands.getAll();
+      const savePage = commands.find((c) => c.name === "save-page");
+      el.textContent = savePage && savePage.shortcut ? savePage.shortcut : "Not set";
+    } catch (_) {
+      el.textContent = "—";
+    }
+  };
+
+  if (optionsBtn && mainView && settingsView) {
+    optionsBtn.addEventListener("click", () => {
+      mainView.classList.add("hidden");
+      settingsView.classList.remove("hidden");
+      refreshShortcutDisplay();
+    });
+  }
+  if (settingsBackBtn && mainView && settingsView) {
+    settingsBackBtn.addEventListener("click", () => {
+      settingsView.classList.add("hidden");
+      mainView.classList.remove("hidden");
+    });
+  }
+
+  const openShortcutBtn = document.getElementById("open-shortcut-settings");
+  if (openShortcutBtn && browser.commands && typeof browser.commands.openShortcutSettings === "function") {
+    openShortcutBtn.addEventListener("click", () => {
+      browser.commands.openShortcutSettings();
+    });
+  } else if (openShortcutBtn) {
+    openShortcutBtn.style.display = "none";
+  }
 });
 
 // Handle export button click

@@ -26,6 +26,7 @@ A secure Firefox extension that allows you to store and organize your bookmarks 
 ### 💾 Data Management
 - **Import/Export** - Backup and restore your bookmarks as JSON files
 - **Save Current Tab** - One-click bookmark saving from the active tab
+- **Keyboard Shortcut** - Save the current page with a key (e.g. F9 or Ctrl+Alt+S). In the popup, click **Options** (gear icon), then **Set keyboard shortcut for "Save page"** to assign a key in Firefox’s Manage Extension Shortcuts; pick one that doesn’t conflict with Firefox’s built-in shortcuts.
 - **Context Menu Integration** - Right-click any tab to save it to bookmarks
 - **Duplicate Prevention** - Automatic duplicate detection and prevention
 
@@ -91,6 +92,16 @@ A secure Firefox extension that allows you to store and organize your bookmarks 
 - **DevTools Vulnerability**: Encrypted data can be decrypted using browser DevTools
 - **No Backend**: No server-side validation or secure key storage
 - **Memory Access**: While extension is open, encryption keys exist in memory
+
+## ⌨️ Keyboard Shortcut (Save Page)
+You can save the current page without opening the popup by assigning a keyboard shortcut:
+
+1. Open the extension popup and click **Options** (gear icon in the icon bar).
+2. Click **Set keyboard shortcut for "Save page"** to open Firefox’s **Manage Extension Shortcuts**.
+3. Choose a key combination that Firefox isn’t already using (e.g. **F9**, **Ctrl+Alt+S**). Avoid **Ctrl+Shift+S** (screenshot) and **Alt+Shift+S** (history).
+4. After saving, that key will save the active tab and show a short “Page saved” toast on the page.
+
+The same “Save Tab to” folder and default-save behaviour apply when using the shortcut.
 
 ## 🔄 Import & Export
 - **Export**: Click the export button to download a `.json` backup of all your bookmarks

@@ -117,50 +117,68 @@ browser.runtime.onMessage.addListener((message, _sender, sendResponse) => {
   return true; // keep channel open for async sendResponse
 });
 
+/**
+ * Saves the given tab as a bookmark to the root folder.
+ * Skips duplicates. Used by context menu and keyboard command.
+ */
+async function savePageFromTab(tab) {
+  const { url, title, favIconUrl } = tab;
+  if (!url || !title) return;
+
+  try {
+    const result = await browser.storage.local.get([BOOKMARKS_AND_FOLDERS_KEY]);
+    const storedData = result[BOOKMARKS_AND_FOLDERS_KEY] || null;
+
+    let folderData;
+    if (storedData && storedData.encryptedData && storedData.iv) {
+      folderData = await EncryptionService.decrypt(storedData.encryptedData, storedData.iv);
+    } else {
+      folderData = {
+        id: "root",
+        name: "Root",
+        bookmarks: [],
+        subfolders: []
+      };
+    }
+
+    const rootFolder = folderData;
+    const duplicate = rootFolder.bookmarks.find((bookmark) => bookmark.url === url);
+    if (!duplicate) {
+      const bookmarkId = `bookmark-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+      rootFolder.bookmarks.push({
+        id: bookmarkId,
+        url,
+        title,
+        favIconUrl
+      });
+      const { encryptedData, iv } = await EncryptionService.encrypt(JSON.stringify(folderData));
+      await browser.storage.local.set({ [BOOKMARKS_AND_FOLDERS_KEY]: { encryptedData, iv } });
+    }
+  } catch (err) {
+    console.error("Error saving bookmark in background.js:", err);
+  }
+}
+
 // Handle context menu clicks
 browser.contextMenus.onClicked.addListener(async (info, tab) => {
   if (info.menuItemId === "saveTabToBookmarks") {
-    const { url, title, favIconUrl } = tab;
-    if (url && title) {
-      try {
-        // Load and decrypt the folder structure
-        const result = await browser.storage.local.get([BOOKMARKS_AND_FOLDERS_KEY]);
-        const storedData = result[BOOKMARKS_AND_FOLDERS_KEY] || null;
-        
-        let folderData;
-        if (storedData && storedData.encryptedData && storedData.iv) {
-          folderData = await EncryptionService.decrypt(storedData.encryptedData, storedData.iv);
-        } else {
-          // If no folder structure exists, create a root
-          folderData = {
-            id: "root",
-            name: "Root",
-            bookmarks: [],
-            subfolders: []
-          };
-        }
+    await savePageFromTab(tab);
+  }
+});
 
-        // Save to root folder by default
-        const rootFolder = folderData;
-        // Check for duplicates
-        const duplicate = rootFolder.bookmarks.find((bookmark) => bookmark.url === url);
-        // No confirm dialog in background.js, just skip duplicates
-        if (!duplicate) {
-          const bookmarkId = `bookmark-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-          
-          rootFolder.bookmarks.push({ 
-            id: bookmarkId,
-            url, 
-            title, 
-            favIconUrl 
-          });
-          // Encrypt and save
-          const { encryptedData, iv } = await EncryptionService.encrypt(JSON.stringify(folderData));
-          await browser.storage.local.set({ [BOOKMARKS_AND_FOLDERS_KEY]: { encryptedData, iv } });
-        }
-      } catch (err) {
-        console.error("Error saving bookmark in background.js:", err);
-      }
-    }
+// Handle keyboard shortcut
+browser.commands.onCommand.addListener(async (command) => {
+  if (command !== "save-page") return;
+
+  const tabs = await browser.tabs.query({ active: true, currentWindow: true });
+  const tab = tabs[0];
+  if (!tab) return;
+
+  await savePageFromTab(tab);
+
+  try {
+    await browser.tabs.sendMessage(tab.id, { type: "SHOW_TOAST", text: "Page saved" });
+  } catch (_) {
+    // Tab may be a privileged page where content script cannot run; ignore
   }
 });

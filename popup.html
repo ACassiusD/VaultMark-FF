@@ -482,28 +482,200 @@
       transform: translateY(-1px) scale(1.03);
     }
 
-    .default-save-folder-row {
+    /* ---- Options / Settings view (card + 8px grid) ---- */
+    .settings-view {
+      width: 100%;
+      max-width: 580px;
+    }
+    .settings-header {
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: 10px;
       width: 100%;
-      max-width: 500px;
-      margin: 6px auto;
+      margin-bottom: 20px;
     }
-    .default-save-folder-row label {
+    .settings-back-btn {
+      flex-shrink: 0;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 36px;
+      height: 36px;
+      padding: 0;
+      background: #e8f4ff;
+      border: 1px solid #b3d9ff;
+      color: #007bff;
+      font-size: 18px;
+      line-height: 1;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+    .settings-back-btn:hover {
+      background: #d0eaff;
+    }
+    .settings-title {
+      font-size: 1.1em;
+      font-weight: 600;
+      color: #007bff;
+      margin: 0;
+    }
+    .settings-card {
+      background: #f8f8f8;
+      border: 1px solid #e5e5e5;
+      border-radius: 12px;
+      padding: 24px;
+      width: 100%;
+      box-sizing: border-box;
+    }
+    .settings-block {
+      margin-bottom: 24px;
+    }
+    .settings-block:last-child {
+      margin-bottom: 0;
+    }
+    .settings-block-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: #333;
+      margin: 0 0 20px 0;
+    }
+    .field-group {
+      margin-bottom: 0;
+    }
+    .field-group + .field-group {
+      margin-top: 16px;
+    }
+    .field-label {
+      display: block;
+      font-size: 14px;
+      font-weight: 500;
+      color: #333;
+      margin: 0 0 6px 0;
+    }
+    .field-helper {
+      font-size: 13px;
+      color: #6b7280;
+      margin: 0 0 8px 0;
+      line-height: 1.4;
+    }
+    .field-helper--muted {
+      margin-bottom: 0;
+    }
+    .field-control {
+      display: block;
+      width: 100%;
+      max-width: 400px;
+      min-height: 36px;
+      padding: 8px 12px;
+      border: 1px solid #d1d5db;
+      border-radius: 8px;
+      font-size: 14px;
+      background: #fff;
+      cursor: pointer;
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+    .field-control:hover {
+      border-color: #9ca3af;
+    }
+    .field-control:focus {
+      outline: none;
+      border-color: #007bff;
+      box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.2);
+    }
+    .shortcut-display {
+      margin: 0 0 8px 0;
       font-size: 14px;
       color: #333;
-      white-space: nowrap;
     }
-    .default-save-folder-row select {
-      flex: 1;
-      min-width: 0;
-      padding: 6px 8px;
-      border: 1px solid #ccc;
-      border-radius: 6px;
+    .shortcut-label {
+      font-weight: 500;
+    }
+    .shortcut-value {
+      margin-left: 4px;
+      font-family: ui-monospace, monospace;
+      color: #555;
+    }
+    .shortcut-link {
+      background: none;
+      border: none;
+      padding: 0;
+      font-size: 13px;
+      color: #5a9bd5;
+      text-decoration: none;
+      cursor: pointer;
+      font-weight: normal;
+    }
+    .shortcut-link:hover {
+      color: #007bff;
+      text-decoration: underline;
+    }
+    /* Options card (alternate class names used in settings HTML) */
+    .options-card {
+      background: #f8f8f8;
+      border: 1px solid #e5e5e5;
+      border-radius: 12px;
+      padding: 22px;
+      width: 100%;
+      box-sizing: border-box;
+    }
+    .options-section { margin-bottom: 24px; }
+    .options-section:last-child { margin-bottom: 0; }
+    .options-section-title {
       font-size: 14px;
-      background: white;
+      font-weight: 600;
+      color: #333;
+      margin: 0 0 14px 0;
     }
+    .options-section-title:not(:first-child) { margin-top: 8px; }
+    .options-field { margin-bottom: 16px; }
+    .options-field:last-child { margin-bottom: 0; }
+    .options-label {
+      display: block;
+      font-size: 14px;
+      font-weight: 500;
+      color: #333;
+      margin-bottom: 4px;
+    }
+    .options-helper {
+      font-size: 12px;
+      color: #6b7280;
+      margin-bottom: 6px;
+      line-height: 1.4;
+    }
+    .options-helper--last { margin-bottom: 0; }
+    .options-select {
+      display: block;
+      width: 100%;
+      max-width: 480px;
+      padding: 10px 12px;
+      font-size: 14px;
+      border: 1px solid #d1d5db;
+      border-radius: 8px;
+      background: #fff;
+      cursor: pointer;
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+    .options-select:hover { border-color: #9ca3af; }
+    .options-select:focus {
+      outline: none;
+      border-color: #007bff;
+      box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.2);
+    }
+    .shortcut-display-row { margin-bottom: 4px; }
+    .shortcut-display-label { font-size: 14px; font-weight: 500; color: #333; }
+    .shortcut-display-value { font-size: 13px; color: #6b7280; margin-left: 4px; }
+    .shortcut-helper { font-size: 12px; color: #6b7280; margin-top: 2px; }
+    .shortcut-helper button {
+      background: none;
+      border: none;
+      padding: 0;
+      font-size: 12px;
+      color: #5b8def;
+      text-decoration: none;
+      cursor: pointer;
+    }
+    .shortcut-helper button:hover { text-decoration: underline; color: #4070d4; }
   </style>
 </head>
 <body>
@@ -547,17 +719,13 @@
         <img src="icons/save-tab.svg" alt="Save Current Tab">
         <span class="tooltip">Save Current Tab</span>
       </button>
+      <button id="options-btn">
+        <img src="icons/settings.svg" alt="Options">
+        <span class="tooltip">Options</span>
+      </button>
     </div>
 
-    <!-- Default folder for Save Current Tab -->
-    <div class="default-save-folder-row">
-      <label for="default-save-folder">Save Tab to:</label>
-      <select id="default-save-folder" title="Choose which folder to use when saving the current tab (or use current folder)">
-        <option value="">Current folder</option>
-      </select>
-    </div>
-
-    <!-- Filter Global Toggle -->
+    <div id="main-view">
     <div class="search-container">
       <input type="text" id="bookmark-search" placeholder="Search bookmarks..." />
       <button class="clear-search-btn" id="clear-search-btn">✕</button>
@@ -581,6 +749,43 @@
     <ul id="bookmarks-list">
       <div class="folders-container"></div>
     </ul>
+
+    </div>
+    <!-- Settings view (hidden by default) -->
+    <div id="settings-view" class="settings-view hidden">
+      <header class="settings-header">
+        <button type="button" id="settings-back-btn" class="settings-back-btn" aria-label="Back to bookmarks">←</button>
+        <h2 class="settings-title">Options</h2>
+      </header>
+      <div class="options-card">
+        <section class="options-section" aria-labelledby="general-heading">
+          <h3 id="general-heading" class="options-section-title">General</h3>
+          <div class="options-field">
+            <label for="default-save-folder" class="options-label">Default save location</label>
+            <p class="options-helper">Choose where new tabs are saved by default.</p>
+            <select id="default-save-folder" class="options-select" title="Choose which folder to use when saving the current tab (or use current folder)">
+              <option value="">Current folder</option>
+            </select>
+          </div>
+        </section>
+        <section class="options-section" aria-labelledby="shortcuts-heading">
+          <h3 id="shortcuts-heading" class="options-section-title">Shortcuts</h3>
+          <div class="options-field">
+            <div class="shortcut-display-row">
+              <span class="shortcut-display-label">Keyboard shortcut:</span>
+              <span id="current-shortcut-display" class="shortcut-display-value">Not set</span>
+            </div>
+            <div class="shortcut-helper">
+              <button type="button" id="open-shortcut-settings">Change in browser settings →</button>
+            </div>
+          </div>
+        </section>
+        <section class="options-section" aria-labelledby="advanced-heading">
+          <h3 id="advanced-heading" class="options-section-title">Advanced</h3>
+          <p class="options-helper options-helper--last">More options coming later.</p>
+        </section>
+      </div>
+    </div>
 
   </div>
 
