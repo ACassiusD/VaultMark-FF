@@ -150,12 +150,17 @@ browser.storage.local.clear()
 ### Cross-Browser Compatibility
 This Firefox version maintains full feature parity with the Chrome version while using Firefox-specific APIs and manifest format.
 
-## 📝 Version History
+## 📝 Changelog
 
-### Firefox Version 1.0
-- ✅ Complete port from Chrome extension
-- ✅ All core features working
-- ✅ Firefox API compatibility
-- ✅ Favicon support for manual bookmark addition
-- ✅ Context menu integration
-- ✅ Import/Export functionality
+### 1.1
+- Fixed importing
+- Added keyboard shortcut for “Save page” (configurable in browser extension shortcuts)
+- Added settings page (default save location, shortcut link)
+
+### 1.0
+- Complete port from Chrome extension
+- All core features working
+- Firefox API compatibility
+- Favicon support for manual bookmark addition
+- Context menu integration
+- Import/Export functionality

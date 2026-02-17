@@ -1,7 +1,7 @@
 {
   "manifest_version": 2,
   "name": "Private Bookmarks",
-  "version": "1.0",
+  "version": "1.1",
   "description": "Securely store and manage your bookmarks.",
   "permissions": ["storage", "contextMenus", "tabs", "<all_urls>"],
   "background": {
